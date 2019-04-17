@@ -43,7 +43,7 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
    iob->setResult(path, result);
 
    const size_t bytes{ 1024 * 1024 * 256 };      // 256MB
-   const size_t chunkBytes{ 1024 * 1024 * 256 }; // 64MB
+   const size_t chunkBytes{ 1024 * 1024 * 64 }; // 64MB
    assert(0 == bytes % chunkBytes);
    const size_t chunks{ bytes / chunkBytes };
    const size_t iterations{ 10 };
@@ -58,11 +58,10 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
    high_resolution_clock::time_point start, end;
    auto writeTime = end - start;
    size_t megabytesWritten{ 0 };
+   std::string filename{ path + std::string("benchmark.tmp") };
 
    for (size_t i = 0; i < iterations + 1; ++i)
    {
-      std::string filename{ path + std::string("benchmark.tmp") +
-                            std::to_string(i) };
 
       start = high_resolution_clock::now();
       FILE* file = fopen(filename.c_str(), "wb");
@@ -84,7 +83,6 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
 
       fclose(file);
       end = high_resolution_clock::now();
-      remove(filename.c_str());
 
       if (iob->m_abort)
          break;
@@ -100,6 +98,8 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
       if (iob->m_abort || writeTime > maxDuration)
          break;
    }
+   remove(filename.c_str());
+
    iob->m_running = false;
 }
 
