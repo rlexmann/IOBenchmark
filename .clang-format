@@ -1,0 +1,18 @@
+#---
+BasedOnStyle: Mozilla
+IndentWidth: 3
+AlignEscapedNewlines: Left
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass:             false
+    AfterControlStatement:  true
+    AfterEnum:              false
+    AfterFunction:          false
+    AfterNamespace:         false
+    AfterStruct:            false
+    BeforeCatch:            true
+    BeforeElse:             true
+    IndentBraces:           false
+    SplitEmptyFunction:     false
+    SplitEmptyNamespace:    true
+#---
