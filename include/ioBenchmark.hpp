@@ -26,13 +26,15 @@ class IOBenchmark {
    void abort();
 
    // query methods
-   const double getTempDirRating() const {
-      const auto it = m_results.find(m_currentPath);
-      return (it != m_results.cend()) ? it->second.rating : -1.0;
+   const double getTempDirRating() const
+   {
+      Result r;
+      return getResult(m_currentPath, r) ? r.rating : -1.0;
    }
-   const double getTempDirWriteSpeed() const {
-      const auto it = m_results.find(m_currentPath);
-      return (it != m_results.cend()) ? it->second.writeSpeed : 0.0;
+   const double getTempDirWriteSpeed() const
+   {
+      Result r;
+      return getResult(m_currentPath, r) ? r.writeSpeed : 0.0;
    }
    const bool isRunning() const { return m_running; }
 
@@ -41,12 +43,14 @@ class IOBenchmark {
    bool m_abort{ false };     // used to abort IOBenchmarkProc in worker thread
    bool m_running{ false };
    std::thread m_worker;
-   std::mutex m_mutex;
+   mutable std::mutex m_mutex;
 
    // actual benchmarking procedure
    friend void IOBenchmarkProc(IOBenchmark* const db, const std::string path);
    // result updater
    void setResult(const std::string& path, const Result& result);
+   // result getter
+   bool getResult(const std::string& path, Result& result) const;
    // rating computation
    static const double calcRating(const double writeSpeed);
 

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <chrono>
 #include <cstdio>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <numeric>
@@ -42,13 +43,13 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
    auto result = IOBenchmark::Result();
    iob->setResult(path, result);
 
-   const size_t bytes{ 1024 * 1024 * 256 };      // 256MB
+   const size_t bytes{ 1024 * 1024 * 256 }; // 256MB
    const size_t chunkBytes{ 1024 * 1024 * 64 }; // 64MB
    assert(0 == bytes % chunkBytes);
    const size_t chunks{ bytes / chunkBytes };
-   const size_t iterations{ 10 };
+   const size_t iterations{ 25 };
    const auto maxDuration =
-     milliseconds(5000); // 5 seconds - maximal duration of benchmarking
+     milliseconds(10000); // 5 seconds - maximal duration of benchmarking
 
    // generate data for writing
    std::vector<char> data(bytes / sizeof(char));
@@ -59,12 +60,15 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
    auto writeTime = end - start;
    size_t megabytesWritten{ 0 };
    std::string filename{ path + std::string("benchmark.tmp") };
+   std::fstream fs;
 
-   for (size_t i = 0; i < iterations + 1; ++i)
+   for (size_t i = 0; i < iterations; ++i)
    {
 
       start = high_resolution_clock::now();
+      //fs.open(filename, std::ios::out | std::ios::binary);
       FILE* file = fopen(filename.c_str(), "wb");
+      setvbuf(file, nullptr, _IONBF, 0);
       if (nullptr == file) // directory is not writeable
       {
          result.rating = 0.0;
@@ -75,12 +79,14 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
       // write test file
       for (size_t c = 0; c < chunks; ++c)
       {
+         //fs.write(data.data() + c * chunkSize, chunkSize);
          fwrite(data.data() + c * chunkSize, sizeof(char), chunkSize, file);
          megabytesWritten += chunkBytes / (1024 * 1024);
          if (iob->m_abort)
             break;
       }
 
+      //fs.close()
       fclose(file);
       end = high_resolution_clock::now();
 
@@ -93,6 +99,7 @@ IOBenchmarkProc(IOBenchmark* const iob, const std::string path) {
                            duration_cast<milliseconds>(writeTime).count()) *
                           1e3;
       result.rating = IOBenchmark::calcRating(result.writeSpeed);
+      std::cout << result.writeSpeed << "MB/s" << std::endl;
       iob->setResult(path, result);
 
       if (iob->m_abort || writeTime > maxDuration)
@@ -109,6 +116,24 @@ IOBenchmark::setResult(const std::string& path, const Result& result) {
    m_currentPath = path;
    m_results[path] = result;
    m_mutex.unlock();
+}
+
+bool IOBenchmark::getResult(const std::string& path, Result& result) const
+{
+   bool success{ false };
+   m_mutex.lock();
+   const auto it = m_results.find(m_currentPath);
+   if (it != m_results.cend())
+   {
+      result = it->second;
+      success = true;
+   }
+   else
+   {
+      success = false;
+   }
+   m_mutex.unlock();
+   return success;
 }
 
 const double

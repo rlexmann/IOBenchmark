@@ -9,7 +9,7 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 file(GLOB_RECURSE SOURCES
 	"${SOURCE_DIR}/*.cpp"
-	"${SOURCE_DIR}/*.hpp"
+	"${INCLUDE_DIR}/*.hpp"
 )
 
 find_package (Threads)
